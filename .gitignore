@@ -1,0 +1,26 @@
+# Node.js
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Dependency directories
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional
+*.bak
+*.swp
+*.db
+*.sqlite
+
+# Environment variables
+.env
+
+# IDEs
+.idea/
+.vscode/
