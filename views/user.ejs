@@ -7,7 +7,25 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge" />
   <meta name="description" content="" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <script
+      type="text/javascript"
+      lang="javascript"
+      src="https://cdns.gigya.com/JS/gigya.js?apiKey=3_8Dql_zFQevMd2WF0V8qthKHWLI4hTuiNdR2YSLvDvb5g9SVQI5Yh9jkzu0GaPFSd"
+    ></script>
+  <script>
+  function logoutFunction() {
+    var userinfo = <%- JSON.stringify(userinfo) %>;
 
+    var params = {
+        "UID": userinfo.uid
+    }
+
+    gigya.accounts.logout(params);
+    setTimeout(function () {
+        location.reload();
+    }, 2000);
+  }
+  </script>
   <!--====== Title ======-->
   <title>OIDC Federation Test</title>
 
@@ -54,14 +72,7 @@
                   <a class="page-scroll active" href="#hero-area">Home</a>
                 </li>
                 <li class="nav-item">
-                  <a class="page-scroll" href="#services">Services</a>
-                </li>
-
-                <li class="nav-item">
-                  <a class="page-scroll" href="#pricing">Pricing</a>
-                </li>
-                <li class="nav-item">
-                  <a class="page-scroll" href="#contact">Contact</a>
+                  <a class="page-scroll" href="javascript:void(0);" onclick="logoutFunction()">Logout</a>
                 </li>
               </ul>
             </div>
@@ -908,7 +919,6 @@
   <script src="assets/js/tiny-slider.js"></script>
 
   <script>
-
     //===== close navbar-collapse when a  clicked
     let navbarTogglerNine = document.querySelector(
       ".navbar-nine .navbar-toggler"

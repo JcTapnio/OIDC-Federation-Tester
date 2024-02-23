@@ -20,7 +20,7 @@ authRouter.get("/", async (req, res) => {
     res.render("home", { authorizationUrl });
   } catch (error) {
     console.error(error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).send("Internal Server Error: " + error.message);
   }
 });
 
@@ -43,7 +43,23 @@ authRouter.get("/login/callback", async (req, res) => {
     res.redirect("/user");
   } catch (error) {
     console.error(error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).send("Internal Server Error: " + error.message);
+  }
+});
+
+authRouter.get("/inactive", async (req, res) => {
+  try {
+    const codeVerifier = getCodeVerifier();
+    const authorizationUrl = getAuthorizationUrl(
+      req.app.locals.client,
+      req.app.locals.oidcIssuer,
+      codeVerifier
+    );
+
+    res.render("inactive", { authorizationUrl });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error: " + error.message);
   }
 });
 
