@@ -52,4 +52,4 @@ Start the server
 
 To use the logout function.
 Make sure that the `views/user.ejs` gigya SDK is using your current environment API Key
-`src="https://cdns.gigya.com/JS/gigya.js?apiKey=<API_KEY>"`
+Edit this line `src="https://cdns.gigya.com/JS/gigya.js?apiKey=<API_KEY>"`
