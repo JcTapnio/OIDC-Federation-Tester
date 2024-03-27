@@ -8,10 +8,10 @@
   <meta name="description" content="" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
   <script
-      type="text/javascript"
-      lang="javascript"
-      src="https://cdns.gigya.com/JS/gigya.js?apiKey=3_8Dql_zFQevMd2WF0V8qthKHWLI4hTuiNdR2YSLvDvb5g9SVQI5Yh9jkzu0GaPFSd"
-    ></script>
+  type="text/javascript"
+  lang="javascript"
+  src="https://cdns.gigya.com/JS/gigya.js?apiKey=<%= process.env.GIGYA_API_KEY %>"
+  ></script>
   <script>
   function logoutFunction() {
     var userinfo = <%- JSON.stringify(userinfo) %>;
