@@ -21,6 +21,7 @@ Create a .env file in the project and add the following:
 
 `REDIRECT_URI` = http:localhost:8080/login/callback
 
+`GIGYA_API_KEY` = Site API Key
 
 ## Run Locally
 
