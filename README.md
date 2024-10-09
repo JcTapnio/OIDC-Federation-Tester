@@ -19,7 +19,7 @@ Create a .env file in the project and add the following:
 
 `CLIENT_SECRET` = OIDC RP client secret
 
-`REDIRECT_URI` = http:localhost:8080/login/callback
+`REDIRECT_URI` = http://localhost:8080/login/callback
 
 `GIGYA_API_KEY` = Site API Key
 
