@@ -55,5 +55,5 @@ app.use("/", authRouter);
 app.use("/user", userRouter);
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port http://localhost:${PORT}`);
 });
