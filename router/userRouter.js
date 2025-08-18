@@ -11,4 +11,10 @@ userRouter.get("/claims", async (req, res) => {
   await getUserClaims(req, res);
 });
 
+// Add a redirect route for handling BPID form submission
+userRouter.post("/set-bpid", (req, res) => {
+  const bpid = req.body.bpid;
+  res.redirect(`/welcome/user?bpid=${encodeURIComponent(bpid)}`);
+});
+
 export default userRouter;

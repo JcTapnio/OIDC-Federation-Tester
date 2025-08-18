@@ -16,11 +16,54 @@ const processCallback = async (req, res, client, codeVerifier) => {
 const getUserInfo = async (req, res, client) => {
   try {
     const tokenSet = req.session.tokenSet;
-
     console.log("tokenSet: ", tokenSet);
-
+    
+    // Get BPID from query parameters if provided
+    const bpid = req.query.bpid || null;
+    
+    // Get userinfo from the token
     const userinfo = await client.userinfo(tokenSet.access_token);
-    res.render("user", { userinfo });
+    
+    // Get organization information from userinfo if available
+    let organizations = [];
+    if (userinfo && userinfo.orgs) {
+      console.log("Organization data:", JSON.stringify(userinfo.orgs, null, 2));
+      organizations = Array.isArray(userinfo.orgs) ? userinfo.orgs : [userinfo.orgs];
+      
+      // Try to extract BPIDs from org names if they're strings that contain BPID information
+      organizations = organizations.map(org => {
+        if (typeof org === 'string') {
+          return org;
+        } else if (typeof org === 'object') {
+          // If org already has a bpid property, return as is
+          if (org.bpid) {
+            return org;
+          }
+          
+          // Try to extract BPID from org name or other properties
+          const orgStr = org.name || org.orgName || org.id || '';
+          if (typeof orgStr === 'string') {
+            const bpidMatch = orgStr.match(/BPID:([^,\s\-]+)/i);
+            if (bpidMatch && bpidMatch[1]) {
+              // Add bpid property to the org object
+              return { ...org, bpid: bpidMatch[1] };
+            }
+          }
+          return org;
+        }
+        return org;
+      });
+    }
+    
+    // Pass the BPID, organizations, and Gigya credentials to the template
+    res.render("user", {
+      userinfo,
+      bpid,
+      organizations,
+      gigyaUserKey: process.env.USERKEY,
+      gigyaSecret: process.env.SECRET,
+      gigyaApiKey: process.env.GIGYA_API_KEY
+    });
   } catch (error) {
     if (error.error === "invalid_token") {
       // Redirect the user to localhost:8080
