@@ -10,100 +10,21 @@
   <script
   type="text/javascript"
   lang="javascript"
-  src="https://cdns.gigya.com/JS/gigya.js?apiKey=<%= gigyaApiKey %>"
+  src="https://cdns.gigya.com/JS/gigya.js?apiKey=<%= process.env.GIGYA_API_KEY %>"
   ></script>
   <script>
-    // Function to set organization context when button is clicked
-    function setOrgContext(bpidValue) {
-      if (bpidValue) {
-        const userKey = '<%= gigyaUserKey %>';
-        const secret = '<%= gigyaSecret %>';
-        const apiKey = '<%= gigyaApiKey %>';
-        
-        console.log("Setting organization context with BPID:", bpidValue);
-        console.log("Using userKey:", userKey);
-        console.log("Using secret:", secret ? secret.substring(0, 3) + "..." : "Missing");
-        console.log("Using apiKey:", apiKey);
-        
-        // Create parameter object for API call
-        const params = {
-          userKey: userKey,
-          secret: secret,
-          apiKey: apiKey,
-          callback: function(response) {
-            if (response.errorCode === 0) {
-              console.log("Organization context set successfully");
-              document.getElementById('orgStatusSuccess').style.display = 'block';
-              document.getElementById('orgStatusError').style.display = 'none';
-            } else {
-              console.error("Error setting organization context:", response);
-              document.getElementById('orgStatusError').innerText = "Error: " + response.errorMessage;
-              document.getElementById('orgStatusError').style.display = 'block';
-              document.getElementById('orgStatusSuccess').style.display = 'none';
-            }
-          }
-        };
-        
-        // Call the API with parameters
-        console.log("Calling gigya.accounts.b2b.setOrganizationContext with BPID:", bpidValue);
-        gigya.accounts.b2b.setOrganizationContext(bpidValue, params);
-      } else {
-        console.log("No BPID provided, skipping setOrganizationContext");
-        document.getElementById('orgStatusError').innerText = "Error: No BPID provided";
-        document.getElementById('orgStatusError').style.display = 'block';
-        document.getElementById('orgStatusSuccess').style.display = 'none';
-      }
-    }
-      
-    function logoutFunction() {
-      var userinfo = <%- JSON.stringify(userinfo) %>;
-    
-      var params = {
-          "UID": userinfo.uid
-      }
-    
-      gigya.accounts.logout(params);
-      setTimeout(function () {
-          location.reload();
-      }, 2000);
+  function logoutFunction() {
+    var userinfo = <%- JSON.stringify(userinfo) %>;
+
+    var params = {
+        "UID": userinfo.uid
     }
 
-    // Extract BPID from organization string
-    function extractAndSetBPID(orgString) {
-      // Look for BPID: pattern followed by the ID
-      const bpidMatch = orgString.match(/BPID:([^,\s\-]+)/i);
-      if (bpidMatch && bpidMatch[1]) {
-        const extractedBPID = bpidMatch[1];
-        document.getElementById('bpidInput').value = extractedBPID;
-        document.getElementById('formBpid').value = extractedBPID;
-        setOrgContext(extractedBPID);
-      } else {
-        alert('Could not extract BPID from organization string: ' + orgString);
-      }
-    }
-
-    // Sync BPID inputs
-    function syncBPIDInputs() {
-      const bpidInput = document.getElementById('bpidInput');
-      const formBpid = document.getElementById('formBpid');
-      
-      bpidInput.addEventListener('input', function() {
-        formBpid.value = this.value;
-      });
-    }
-
-    // Automatically fill the BPID input if provided in URL
-    document.addEventListener('DOMContentLoaded', function() {
-      const bpidValue = '<%= bpid %>';
-      if (bpidValue !== 'null') {
-        document.getElementById('bpidInput').value = bpidValue;
-        document.getElementById('formBpid').value = bpidValue;
-        setOrgContext(bpidValue);
-      }
-      
-      // Set up input syncing
-      syncBPIDInputs();
-    });
+    gigya.accounts.logout(params);
+    setTimeout(function () {
+        location.reload();
+    }, 2000);
+  }
   </script>
   <!--====== Title ======-->
   <title>OIDC Federation Test</title>
@@ -227,115 +148,6 @@
             <p>
               This is the OIDC Outbound Federation Testing.
             </p>
-            
-            <!-- BPID Input Form -->
-            <div class="card mt-4 mb-4" style="background-color: #f8f9fa; border-radius: 10px; padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-              <h5 class="mb-3">Set Organization Context</h5>
-              
-              <div class="form-group mb-3">
-                <label for="bpidInput">Enter BPID:</label>
-                <input type="text" id="bpidInput" class="form-control" placeholder="Enter BPID here" value="<%= bpid || '' %>" />
-              </div>
-              
-              <button type="button" onclick="setOrgContext(document.getElementById('bpidInput').value)" class="btn btn-primary mb-3">
-                Set Organization Context
-              </button>
-              
-              <!-- Alternative form for submission -->
-              <form action="/welcome/user/set-bpid" method="post" class="d-none">
-                <input type="hidden" name="bpid" id="formBpid" value="<%= bpid || '' %>" />
-                <button type="submit" class="btn btn-outline-secondary btn-sm mb-3">
-                  Submit via Form
-                </button>
-              </form>
-              
-              <div id="orgStatusSuccess" class="alert alert-success" style="display: none;">
-                Organization context set successfully!
-              </div>
-              
-              <div id="orgStatusError" class="alert alert-danger" style="display: none;">
-                Error setting organization context.
-              </div>
-              
-              <div class="mt-2 small text-muted">
-                <p>Note: The setOrganizationContext API requires userKey, secret, and apiKey parameters, which are supplied from server-side environment variables.</p>
-              </div>
-              
-              <% if (organizations && organizations.length > 0) { %>
-              <div class="mt-3">
-                <h6>Available Organizations:</h6>
-                <ul class="list-group">
-                  <% organizations.forEach(function(org) { %>
-                    <li class="list-group-item">
-                      <% if (typeof org === 'string') { %>
-                        <%= org %> 
-                        <% if (org.includes('BPID:')) { %>
-                          <button 
-                            class="btn btn-sm btn-outline-primary float-end"
-                            onclick="extractAndSetBPID('<%= org %>')"
-                          >
-                            Use
-                          </button>
-                        <% } %>
-                      <% } else if (typeof org === 'object') { %>
-                        <% 
-                          // Determine what to display based on org object structure
-                          let displayText = '';
-                          let bpidValue = '';
-                          
-                          if (org.bpid) {
-                            bpidValue = org.bpid;
-                            displayText += 'BPID: ' + org.bpid;
-                          }
-                          
-                          if (org.name) {
-                            displayText += (displayText ? ' - ' : '') + org.name;
-                          }
-                          
-                          if (org.orgName) {
-                            displayText += (displayText ? ' - ' : '') + org.orgName;
-                          }
-                          
-                          // If nothing specific found, show all properties
-                          if (!displayText) {
-                            displayText = JSON.stringify(org);
-                          }
-                        %>
-                        <%= displayText %>
-                        <% if (bpidValue) { %>
-                          <button 
-                            class="btn btn-sm btn-outline-primary float-end"
-                            onclick="setOrgContext('<%= bpidValue %>')"
-                          >
-                            Use BPID
-                          </button>
-                        <% } %>
-                      <% } %>
-                    </li>
-                  <% }); %>
-                </ul>
-              </div>
-              <% } else { %>
-              <div class="mt-3">
-                <p class="text-muted">No organizations found in the user claims.</p>
-              </div>
-              <% } %>
-              
-              <!-- Debug Information -->
-              <div class="mt-3 d-none">
-                <button class="btn btn-sm btn-outline-secondary" type="button" 
-                       data-bs-toggle="collapse" data-bs-target="#orgDebugInfo" 
-                       aria-expanded="false" aria-controls="orgDebugInfo">
-                  Show Raw Org Data
-                </button>
-                <div class="collapse mt-2" id="orgDebugInfo">
-                  <div class="card card-body">
-                    <pre style="font-size: 0.8rem;"><%= JSON.stringify(organizations, null, 2) %></pre>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
             <div class="light-rounded-buttons mt-4">
               <a href="/user/claims" class="btn btn-lg" style="background-color: white; color: #007bff; font-weight: bold; padding: 12px 30px; border: 2px solid #007bff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 <span style="font-size: 16px;">View Claims JSON</span>
