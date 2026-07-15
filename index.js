@@ -4,9 +4,20 @@ import session from "express-session";
 import path from "path";
 import http from "http";
 import { fileURLToPath } from "url";
-import { Issuer } from "openid-client";
+import { Issuer, custom } from "openid-client";
 import authRouter from "./router/authRouter.js";
 import userRouter from "./router/userRouter.js";
+
+dotenv.config();
+
+if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0") {
+  custom.setHttpOptionsDefaults({
+    rejectUnauthorized: false,
+  });
+  console.warn(
+    "Warning: TLS certificate verification is disabled. This is not recommended for production."
+  );
+}
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -18,7 +29,6 @@ app.use(express.static("public"));
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
-dotenv.config();
 app.use(
   express.urlencoded({
     extended: true,
@@ -26,7 +36,7 @@ app.use(
 );
 app.use(session({ secret: "secret", resave: false, saveUninitialized: true }));
 
-app.use(async (req, res, next) => {
+(async () => {
   try {
     const oidcIssuer = await Issuer.discover(process.env.ISSUER);
     console.log(
@@ -41,19 +51,17 @@ app.use(async (req, res, next) => {
       response_types: ["code"],
     });
 
-    req.app.locals.client = client;
-    req.app.locals.oidcIssuer = oidcIssuer;
+    app.locals.client = client;
+    app.locals.oidcIssuer = oidcIssuer;
 
-    next();
+    app.use("/", authRouter);
+    app.use("/user", userRouter);
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
+    console.error("Failed to initialize OIDC client:", error);
+    process.exit(1);
   }
-});
-
-app.use("/", authRouter);
-app.use("/user", userRouter);
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+})();
