@@ -8,12 +8,13 @@ const authRouter = express.Router();
 
 authRouter.get("/", async (req, res) => {
   try {
+    const { client, config } = req.appContext;
     const codeVerifier = getCodeVerifier();
     req.session.codeVerifier = codeVerifier;
 
     const authorizationUrl = getAuthorizationUrl(
-      req.app.locals.client,
-      req.app.locals.oidcIssuer,
+      client,
+      config,
       codeVerifier
     );
 
@@ -26,19 +27,19 @@ authRouter.get("/", async (req, res) => {
 
 authRouter.get("/login/callback", async (req, res) => {
   try {
-    const params = req.app.locals.client.callbackParams(req);
-    let codeVerifier = req.session.codeVerifier;
-    const tokenSet = await req.app.locals.client.callback(
-      process.env.REDIRECT_URI,
-      params,
-      {
-        code_verifier: codeVerifier,
-      }
-    );
+    const { client, config } = req.appContext;
+    const params = client.callbackParams(req);
+    const codeVerifier = req.session.codeVerifier;
+    const tokenSet = await client.callback(config.redirectUri, params, {
+      code_verifier: codeVerifier,
+    });
 
-    console.log("received and validated tokens %j", tokenSet);
+    console.log(`[${config.label}] received and validated tokens %j`, tokenSet);
     req.session.tokenSet = tokenSet;
-    console.log("validated ID Token claims %j", tokenSet.claims());
+    console.log(
+      `[${config.label}] validated ID Token claims %j`,
+      tokenSet.claims()
+    );
 
     res.redirect("/user");
   } catch (error) {
@@ -49,10 +50,13 @@ authRouter.get("/login/callback", async (req, res) => {
 
 authRouter.get("/inactive", async (req, res) => {
   try {
+    const { client, config } = req.appContext;
     const codeVerifier = getCodeVerifier();
+    req.session.codeVerifier = codeVerifier;
+
     const authorizationUrl = getAuthorizationUrl(
-      req.app.locals.client,
-      req.app.locals.oidcIssuer,
+      client,
+      config,
       codeVerifier
     );
 

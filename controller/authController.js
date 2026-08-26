@@ -4,11 +4,12 @@ const getCodeVerifier = () => {
   return generators.codeVerifier();
 };
 
-const getAuthorizationUrl = (client, oidcIssuer, codeVerifier) => {
+const getAuthorizationUrl = (client, appConfig, codeVerifier) => {
   const codeChallenge = generators.codeChallenge(codeVerifier);
   return client.authorizationUrl({
-    scope: "openid email profile orgs roles uid",
-    resource: oidcIssuer.metadata.authorization_endpoint,
+    redirect_uri: appConfig.redirectUri,
+    response_type: "code",
+    scope: "openid email profile uid",
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
   });

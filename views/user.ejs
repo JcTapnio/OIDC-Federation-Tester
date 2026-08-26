@@ -10,7 +10,7 @@
   <script
   type="text/javascript"
   lang="javascript"
-  src="https://cdns.gigya.com/JS/gigya.js?apiKey=<%= process.env.GIGYA_API_KEY %>"
+  src="https://cdns.gigya.com/JS/gigya.js?apiKey=<%= app.gigyaApiKey %>"
   ></script>
   <script>
   function logoutFunction() {
@@ -27,7 +27,7 @@
   }
   </script>
   <!--====== Title ======-->
-  <title>OIDC Federation Test</title>
+  <title>OIDC Federation Test - <%= app.label %></title>
 
   <!--====== Favicon Icon ======-->
   <link rel="shortcut icon" href="../assets/images/favicon.svg" type="image/svg" />
@@ -58,6 +58,7 @@
           <nav class="navbar navbar-expand-lg">
             <a class="navbar-brand" href="">
               <img src="assets/images/white-logo.svg" alt="Logo" />
+              <span class="ms-2 text-white"><%= app.label %></span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNine"
               aria-controls="navbarNine" aria-expanded="false" aria-label="Toggle navigation">
