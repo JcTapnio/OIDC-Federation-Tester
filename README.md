@@ -26,8 +26,9 @@ Per-app settings (replace `<id>` with the app id from `APP_IDS`, uppercased in e
 - `APP<ID>_ISSUER` - issuer from OIDC OP metadata
 - `APP<ID>_CLIENT_ID` - OIDC RP client id
 - `APP<ID>_CLIENT_SECRET` - OIDC RP client secret
-- `APP<ID>_GIGYA_API_KEY` - Gigya site API key for logout
+- `APP<ID>_GIGYA_API_KEY` - Gigya site API key for the SSO session check on the login page
 - `APP<ID>_REDIRECT_URI` - optional; defaults to `http://localhost:<APP<ID>_PORT>/login/callback`
+- `APP<ID>_POST_LOGOUT_REDIRECT_URI` - optional; defaults to `http://localhost:<APP<ID>_PORT>/logout/callback`
 
 Example:
 
@@ -53,7 +54,7 @@ SAP CDC only accepts `http://localhost` for HTTP redirect URIs (not `app1.localh
 - `http://localhost:8082` - App Two login
 - `http://localhost:8083` - App Three login
 
-Because each port is a different browser origin, sessions and Gigya cookies stay isolated per app.
+Each app port is a different browser origin, but the tester uses one shared session cookie name (`oidc_tester_sid`) on `localhost`. Token and PKCE state are stored **per app id** under `req.session.apps[<id>]`, so logging into one port does not overwrite another app's local OIDC session.
 
 ## CDC Redirect URIs
 
@@ -63,16 +64,36 @@ Register the matching redirect URI on each RP config in CDC:
 - `http://localhost:8082/login/callback`
 - `http://localhost:8083/login/callback`
 
-If you override `APP<ID>_REDIRECT_URI` in `.env`, register that exact value instead.
+Register post-logout redirect URIs for OIDC RP-initiated logout:
+
+- `http://localhost:8081/logout/callback`
+- `http://localhost:8082/logout/callback`
+- `http://localhost:8083/logout/callback`
+
+If you override `APP<ID>_REDIRECT_URI` or `APP<ID>_POST_LOGOUT_REDIRECT_URI` in `.env`, register those exact values instead.
 
 ## URL Map
 
 Each app uses the same route structure on its own port:
 
-- `/` - login page
+- `/` - login page (checks for an existing SAP CDC session when appropriate)
+- `/login/silent` - silent OIDC authorize (`prompt=none`) after `gigya.hasSession()` succeeds
 - `/login/callback` - OIDC callback
 - `/user` - userinfo page
+- `/logout` - RP-initiated logout via OIDC `end_session_endpoint`
+- `/logout/callback` - return URL after CDC ends the session
 - `/inactive` - inactive logout page
+
+## SSO session checker
+
+When you open an app and it has no valid local tokens, the login page loads the Gigya Web SDK and calls `gigya.hasSession()`. If CDC reports an existing SSO session, the app redirects to `/login/silent` and completes OIDC with `prompt=none`. If there is no session, or silent login fails, the LOGIN button is shown.
+
+### Required SAP CDC setup
+
+- Child sites (API keys) must belong to the same parent **Site Group** with **SSO enabled**.
+- Add `localhost` (or your dev hostname) to each site's **Trusted Site URLs** so `gigya.hasSession()` works.
+- OIDC OP login / proxy pages must honor an existing Gigya session when `prompt=none` is used; otherwise CDC returns `login_required`.
+- Cross-domain issuers rely on CDC's SSO gateway; third-party cookie blocking in the browser can prevent SSO across sites.
 
 ## Run Locally
 
@@ -102,13 +123,19 @@ Start the server
 
 Then open `http://localhost:8080` for the app picker, or go directly to an app port such as `http://localhost:8081`.
 
-## Logout Function
+On startup, the server logs each issuer's `end_session_endpoint` when SAP CDC advertises it in OIDC metadata.
 
-Logout uses the Gigya SDK with the per-app API key configured in `APP<ID>_GIGYA_API_KEY`. No manual edits to `views/user.ejs` are needed when switching apps.
+## Logout
+
+Logout uses the OIDC **`end_session_endpoint`** from discovery metadata (SAP CDC RP-initiated logout). The user page links to `/logout`, which redirects to CDC with `id_token_hint` and `post_logout_redirect_uri`, then returns to `/logout/callback` and the login page.
+
+If an issuer does not publish `end_session_endpoint`, the app clears the local session only and logs a warning.
 
 ## Verification
 
 1. Start the server and open `http://localhost:8081`.
 2. Log in and confirm `/user` shows the expected userinfo and app label.
-3. Open `http://localhost:8082` in the same browser.
-4. Confirm app2 still prompts for login and app1's session remains active when you return to app1.
+3. Open `http://localhost:8082` in the same browser. With SSO configured, you should see "Checking existing session..." and land on `/user` without a full login prompt.
+4. Return to app1; it should also recognize the shared session (or reuse its existing local tokens).
+5. Log out from app1 via **Logout**. Confirm the browser visits CDC's end-session URL and returns to app1's login page.
+6. Open app2. If CDC cleared the shared SSO session, app2 should prompt for login again. If app2 still silent-logs in, CDC may have ended only that RP's session; check Site Group SSO and post-logout settings in CDC.

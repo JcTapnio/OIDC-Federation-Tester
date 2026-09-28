@@ -33,6 +33,9 @@ function readAppConfig(appId, index, indexPort) {
   const redirectUri =
     process.env[`${envPrefix}_REDIRECT_URI`] ||
     `http://localhost:${port}/login/callback`;
+  const postLogoutRedirectUri =
+    process.env[`${envPrefix}_POST_LOGOUT_REDIRECT_URI`] ||
+    `http://localhost:${port}/logout/callback`;
 
   return {
     id: appId,
@@ -43,6 +46,7 @@ function readAppConfig(appId, index, indexPort) {
     clientSecret: process.env[`${envPrefix}_CLIENT_SECRET`],
     gigyaApiKey: process.env[`${envPrefix}_GIGYA_API_KEY`],
     redirectUri,
+    postLogoutRedirectUri,
     url: `http://localhost:${port}`,
   };
 }

@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <title>OIDC Federation Test</title>
     <link rel="stylesheet" href="login/style.css" />
+    <% if (checkSso) { %>
+    <script
+      type="text/javascript"
+      lang="javascript"
+      src="https://cdns.gigya.com/JS/gigya.js?apiKey=<%= app.gigyaApiKey %>"
+    ></script>
+    <% } %>
   </head>
   <body>
     <!-- partial:index.partial.html -->
@@ -19,8 +26,17 @@
             />
             <h1 class="opacity">OIDC Federation</h1>
             <p class="opacity"><%= app.label %></p>
-            <div class="register-forget opacity">
-              <a href="<%= authorizationUrl %>">LOGIN</a>
+            <% if (checkSso) { %>
+            <p id="sso-check-status" class="opacity">
+              Checking existing session...
+            </p>
+            <% } %>
+            <div
+              id="login-actions"
+              class="register-forget opacity"
+              <% if (checkSso) { %>style="display: none;"<% } %>
+            >
+              <a id="login-link" href="<%= authorizationUrl %>">LOGIN</a>
             </div>
           </div>
           <div class="circle circle-two"></div>
@@ -30,5 +46,37 @@
     </body>
     <!-- partial -->
     <script src="login/script.js"></script>
+    <% if (checkSso) { %>
+    <script>
+      function showLogin() {
+        var status = document.getElementById("sso-check-status");
+        var actions = document.getElementById("login-actions");
+        if (status) {
+          status.style.display = "none";
+        }
+        if (actions) {
+          actions.style.display = "";
+        }
+      }
+
+      var ssoCheckTimer = setTimeout(showLogin, 4000);
+
+      window.onGigyaServiceReady = function () {
+        gigya.hasSession()
+          .then(function (hasSession) {
+            clearTimeout(ssoCheckTimer);
+            if (hasSession) {
+              window.location.href = "/login/silent";
+            } else {
+              showLogin();
+            }
+          })
+          .catch(function () {
+            clearTimeout(ssoCheckTimer);
+            showLogin();
+          });
+      };
+    </script>
+    <% } %>
   </body>
 </html>

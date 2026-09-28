@@ -63,10 +63,25 @@ function getOidcContext(appConfig) {
         oidcIssuer.issuer
       );
 
+      const endSessionEndpoint = oidcIssuer.metadata.end_session_endpoint;
+      if (endSessionEndpoint) {
+        console.log(
+          "  end_session_endpoint for %s: %s",
+          appConfig.label,
+          endSessionEndpoint
+        );
+      } else {
+        console.warn(
+          "  No end_session_endpoint in metadata for %s; OIDC logout will fall back to local session clear.",
+          appConfig.label
+        );
+      }
+
       const client = new oidcIssuer.Client({
         client_id: appConfig.clientId,
         client_secret: appConfig.clientSecret,
         redirect_uris: [appConfig.redirectUri],
+        post_logout_redirect_uris: [appConfig.postLogoutRedirectUri],
         response_types: ["code"],
       });
 
@@ -170,6 +185,9 @@ for (const port of portsToListen) {
     const appConfig = getAppConfigByPort(port);
     console.log(`  - ${appConfig.label}: http://localhost:${port}`);
     console.log(`    redirect URI: ${appConfig.redirectUri}`);
+    console.log(
+      `    post-logout redirect URI: ${appConfig.postLogoutRedirectUri}`
+    );
   });
 }
 

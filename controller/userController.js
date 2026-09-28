@@ -1,8 +1,11 @@
+import { getAppSession } from "./sessionStore.js";
+
 const getUserInfo = async (req, res, appContext) => {
   const { client, config } = appContext;
 
   try {
-    const tokenSet = req.session.tokenSet;
+    const appSession = getAppSession(req, config.id);
+    const tokenSet = appSession.tokenSet;
 
     if (!tokenSet?.access_token) {
       return res.redirect("/");
